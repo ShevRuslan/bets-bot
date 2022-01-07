@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.24.0",
+    "axios-https-proxy-fix": "^0.17.1",
     "express": "^4.17.1",
     "node-telegram-bot-api": "^0.56.0",
     "nodemon": "^2.0.15"
