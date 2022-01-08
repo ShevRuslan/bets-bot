@@ -9,8 +9,18 @@ module.exports = class {
   telegramBot;
   constructor() {
     this.proxy = this.getProxy();
-    this.telegramBot = new TelegramBot();
+    this.telegramBot = this.initTelegramBot();
   }
+  initTelegramBot = () => {
+    const pathToConfig = path.join("server", "public", "Bot.txt");
+    const file = fs.readFileSync(pathToConfig, "utf8");
+    const content = file.toString();
+    const _config = content.split("^");
+    return new TelegramBot({
+      token: _config[0],
+      id: _config[1].replace(/(\r\n|\n|\r)/gm, ""),
+    });
+  };
   parse = async () => {
     try {
       const response = await axios({
@@ -131,7 +141,9 @@ module.exports = class {
                     }
                     break;
                   } else {
-                    console.log(`3 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${pointFirst}:${pointSecond} ${coef}`);
+                    console.log(
+                      `3 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${pointFirst}:${pointSecond} ${coef}`
+                    );
                   }
                 }
               }
@@ -182,7 +194,9 @@ module.exports = class {
                     }
                     break;
                   } else {
-                    console.log(`4 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${pointFirst} : ${pointSecond} ${coef}`);
+                    console.log(
+                      `4 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${pointFirst} : ${pointSecond} ${coef}`
+                    );
                   }
                 }
               }
