@@ -7,6 +7,9 @@ module.exports = class {
   currentProxy = 0;
   telegramBotMessages = {};
   telegramBot;
+  timeoutCheck = false;
+  isParse = true;
+  lastTimeUpdate = 0;
   constructor() {
     this.proxy = this.getProxy();
     this.telegramBot = this.initTelegramBot();
@@ -21,8 +24,26 @@ module.exports = class {
       id: _config[1].replace(/(\r\n|\n|\r)/gm, ""),
     });
   };
+  getLastTimeUpdate = async (request, response) => {
+    response.status(200).json({ lastTimeUpdate: this.lastTimeUpdate });
+  };
+  startParse = async (request, response) => {
+    this.isParse = true;
+    this.timeoutCheck = setTimeout(() => {
+      this.parse();
+    }, 0);
+    response.status(200).json({ status: "success" });
+  };
+  stopParse = async (request, response) => {
+    clearTimeout(this.timeoutCheck);
+    this.isParse = false;
+    this.currentProxy = 0;
+    response.status(200).json({ status: "success" });
+  };
   parse = async () => {
+    clearTimeout(this.timeoutCheck);
     try {
+      this.lastTimeUpdate = Date.now();
       const response = await axios({
         url: "https://1xstavka.ru/LiveFeed/Get1x2_VZip?sports=1&count=1000&antisports=188&mode=4&country=1&partner=51&getEmpty=true&noFilterBlockEvent=true",
         method: "GET",
@@ -50,7 +71,11 @@ module.exports = class {
     }
     this.currentProxy++;
     if (this.currentProxy <= this.proxy.length) this.currentProxy = 0;
-    this.parse();
+    if (this.isParse) {
+      this.timeoutCheck = setTimeout(() => {
+        this.parse();
+      }, 0);
+    }
   };
   firstAlgorithm = (match) => {
     let id = match["I"];
