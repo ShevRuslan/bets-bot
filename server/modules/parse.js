@@ -1,11 +1,15 @@
 const axios = require("axios-https-proxy-fix");
 const path = require("path");
 const fs = require("fs");
+const TelegramBot = require("../modules/telegramBot");
 module.exports = class {
   proxy = [];
   currentProxy = 0;
+  telegramBotMessages = {};
+  telegramBot;
   constructor() {
     this.proxy = this.getProxy();
+    this.telegramBot = new TelegramBot();
   }
   parse = async () => {
     try {
@@ -39,6 +43,7 @@ module.exports = class {
     this.parse();
   };
   firstAlgorithm = (match) => {
+    let id = match["I"];
     const firstTeam = match["O1"];
     const secondTeam = match["O2"];
     const champ = match["L"];
@@ -49,16 +54,22 @@ module.exports = class {
       if (pointFirst == pointSecond) {
         if (match["E"][1] != undefined) {
           const coef = +match["E"][1]["C"];
-          if (coef >= 2.6)
+          if (coef >= 2.6) {
             console.log(
               `1 АЛГОРИТМ ${champ} | ${firstTeam} - ${secondTeam} (${time}) | ${pointFirst} : ${pointSecond}  ${coef}`
             );
-          else console.log(`1 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${coef}`);
+            if (!this.telegramBotMessages[id]) {
+              const textMessage = `${champ}\n${firstTeam} - ${secondTeam}\nВремя: 70 минута\nСчёт: ${pointFirst} : ${pointSecond}\nРынок: ничья\nКоэфициент: ${coef}`;
+              this.telegramBot.sendMessage(textMessage);
+              this.telegramBotMessages[id] = {};
+            }
+          } else console.log(`1 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${coef}`);
         }
       }
     }
   };
   secondAlgorithm = async (match) => {
+    let id = match["I"];
     const firstTeam = match["O1"];
     const secondTeam = match["O2"];
     const champ = match["L"];
@@ -67,11 +78,16 @@ module.exports = class {
       const pointFirst = match["SC"]["FS"]["S1"] ?? 0;
       const pointSecond = match["SC"]["FS"]["S2"] ?? 0;
       let coef = await this.getStatsMatch(match["I"]);
-      if (+coef >= 3)
+      if (+coef >= 3) {
         console.log(
           `2 АЛГОРИТМ ${champ} | ${firstTeam} - ${secondTeam} (${time}) | ${pointFirst} : ${pointSecond}  ${coef}`
         );
-      else console.log(`2 АЛГОРИТМ  ${firstTeam} - ${secondTeam} ${coef}`);
+        if (!this.telegramBotMessages[id]) {
+          const textMessage = `${champ}\n${firstTeam} - ${secondTeam}\nВремя: 70 минута\nСчёт: ${pointFirst} : ${pointSecond}\nРынок: не будет следующего гола\nКоэфициент: ${coef}`;
+          this.telegramBot.sendMessage(textMessage);
+          this.telegramBotMessages[id] = {};
+        }
+      } else console.log(`2 АЛГОРИТМ  ${firstTeam} - ${secondTeam} ${coef}`);
     }
   };
   thirdAlgorithm = async (match) => {
@@ -108,9 +124,14 @@ module.exports = class {
                     console.log(
                       `3 АЛГОРИТМ ${champ} | ${firstTeam} - ${secondTeam} (${time}) | ${pointFirst} : ${pointSecond}  ${coef}`
                     );
+                    if (!this.telegramBotMessages[id]) {
+                      const textMessage = `${champ}\n${firstTeam} - ${secondTeam}\nВремя: 20 минута\nСчёт: ${pointFirst} : ${pointSecond}\nРынок: азиатский тотал ( тотал меньше указаных значений)\nКоэфициент: ${coef}`;
+                      this.telegramBot.sendMessage(textMessage);
+                      this.telegramBotMessages[id] = {};
+                    }
                     break;
                   } else {
-                    console.log(`3 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${coef}`);
+                    console.log(`3 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${pointFirst}:${pointSecond} ${coef}`);
                   }
                 }
               }
@@ -154,9 +175,14 @@ module.exports = class {
                     console.log(
                       `4 АЛГОРИТМ ${champ} | ${firstTeam} - ${secondTeam} (${time}) | ${pointFirst} : ${pointSecond}  ${coef}`
                     );
+                    if (!this.telegramBotMessages[id]) {
+                      const textMessage = `${champ}\n${firstTeam} - ${secondTeam}\nВремя: перерыв после первого тайма\nСчёт: ${pointFirst} : ${pointSecond}\nРынок: азиатский тотал ( тотал меньше указаных значений)\nКоэфициент: ${coef}`;
+                      this.telegramBot.sendMessage(textMessage);
+                      this.telegramBotMessages[id] = {};
+                    }
                     break;
                   } else {
-                    console.log(`4 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${coef}`);
+                    console.log(`4 АЛГОРИТМ ${firstTeam} - ${secondTeam} ${pointFirst} : ${pointSecond} ${coef}`);
                   }
                 }
               }
@@ -206,4 +232,19 @@ module.exports = class {
     });
     return contents;
   };
+  makeDate(date) {
+    let convertDate = new Date(Date.now());
+    let year = convertDate.getFullYear();
+    let month = convertDate.getMonth() + 1;
+    let day = convertDate.getDate();
+    let hours = convertDate.getHours();
+    let minutes = convertDate.getMinutes();
+    let seconds = convertDate.getSeconds();
+    if (date < 10) date = "0" + date;
+    if (month < 10) month = "0" + month;
+    if (hours < 10) hours = "0" + hours;
+    if (minutes < 10) minutes = "0" + minutes;
+    if (seconds < 10) seconds = "0" + seconds;
+    return `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
+  }
 };
