@@ -3,7 +3,10 @@ module.exports = class {
   BOT = null;
   id = null;
   constructor() {
-    this.BOT = new TelegramBot("5032195209:AAHGogMGSgwPrL00lgwvVkqcHTIGC2w3a5M", { polling: false });
+    this.BOT = new TelegramBot(
+      "5032195209:AAHGogMGSgwPrL00lgwvVkqcHTIGC2w3a5M",
+      { polling: false }
+    );
     this.id = 722760924;
   }
   sendMessage(text) {

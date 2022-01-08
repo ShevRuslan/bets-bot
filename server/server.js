@@ -8,6 +8,6 @@ app.use("/api", router);
 app.use("/", express.static(path.join(__dirname, "../dist/spa")));
 server.listen(3005, async () => {
   const parse = new Parse();
-  parse.parse();
+  // parse.parse();
   console.log("We are live on " + 3005);
 });
